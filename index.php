@@ -86,18 +86,12 @@ switch ($action) {
                 exit;
             }
             $u = $data['usuario'];
-            $_SESSION['logged_in']        = true;
-            $_SESSION['last_activity']    = time();
-            $_SESSION['comercio_id']      = $id;
-            $_SESSION['comercio_slug']    = $u['comercio_slug'];
-            $_SESSION['comercio_nombre']  = $u['comercio_nombre'];
-            $_SESSION['usuario_id']       = $u['id'];
-            $_SESSION['usuario_username'] = $u['username'];
-            $_SESSION['usuario_nombre']   = $u['nombre'];
-            $_SESSION['usuario_email']    = $u['email'] ?? '';
-            $_SESSION['usuario_rol']      = $u['rol'];
-            $_SESSION['impersonando']     = $id; // marca que esta sesión es impersonación activa
-            header("Location: " . SupConfig::CLIENT_BASE_URL . "/dashboard");
+            $tok = $model->generarTokenImpersonacion((int)$u['id'], $id);
+            if (!$tok['ok']) {
+                echo '<script>alert("No se pudo generar el acceso: ' . addslashes($tok['msg']) . '");history.back();</script>';
+                exit;
+            }
+            header("Location: " . SupConfig::CLIENT_BASE_URL . "/impersonar-login/{$tok['token']}");
             exit;
         } elseif ($sub === 'documentos' && $id) {
             echo json_encode($model->obtenerDocumentos($id));

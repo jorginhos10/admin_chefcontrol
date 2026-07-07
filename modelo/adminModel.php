@@ -206,6 +206,34 @@ class AdminModel {
         }
     }
 
+    // Token de un solo uso para que el panel cliente (otro subdominio, sesión
+    // distinta) reconozca la impersonación sin depender de compartir cookies.
+    public function generarTokenImpersonacion(int $usuarioId, int $comercioId): array {
+        try {
+            $this->db->exec(
+                "CREATE TABLE IF NOT EXISTS impersonacion_tokens (
+                    token VARCHAR(64) NOT NULL PRIMARY KEY,
+                    usuario_id INT NOT NULL,
+                    comercio_id INT NOT NULL,
+                    expira_en DATETIME NOT NULL,
+                    usado TINYINT(1) NOT NULL DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+            );
+            $this->db->exec("DELETE FROM impersonacion_tokens WHERE expira_en < NOW()");
+
+            $token  = bin2hex(random_bytes(24));
+            $expira = date('Y-m-d H:i:s', strtotime('+2 minutes'));
+            $this->db->prepare(
+                "INSERT INTO impersonacion_tokens (token, usuario_id, comercio_id, expira_en) VALUES (?, ?, ?, ?)"
+            )->execute([$token, $usuarioId, $comercioId, $expira]);
+
+            return ['ok' => true, 'token' => $token];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'msg' => $e->getMessage()];
+        }
+    }
+
     public function obtenerComercios(): array {
         try {
             return $this->db->query(
