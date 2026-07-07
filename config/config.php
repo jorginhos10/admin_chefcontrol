@@ -3,10 +3,10 @@
 
 class SupConfig {
     const DB_HOST     = 'localhost';
-    const DB_NAME     = 'chefcontrol';      // DB principal (restaurantes)
-    const DB_NAME_SUP = 'chefcontrol_sup';  // DB superadmin
-    const DB_USER     = 'root';
-    const DB_PASS     = '';
+    const DB_NAME     = 'jorginho_app-chefcontrol';      // DB principal (restaurantes)
+    const DB_NAME_SUP = 'jorginho_su-chefcontrol';  // DB superadmin
+    const DB_USER     = 'jorginho_app-chefcontrol';
+    const DB_PASS     = 'jorginho10.';
     const DB_CHARSET  = 'utf8mb4';
 
     const SESSION_TIMEOUT = 1800;
