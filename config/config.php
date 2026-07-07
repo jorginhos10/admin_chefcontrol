@@ -11,6 +11,9 @@ class SupConfig {
 
     const SESSION_TIMEOUT = 1800;
 
+    // URL base del panel del cliente (dominio separado del panel de superadmin)
+    const CLIENT_BASE_URL = 'https://chefcontrol.cloud-control.co';
+
     // ── Inalambria Express (SMS) ─────────────────────────────────────────────────
     const SMS_API_KEY  = 'sk_live_xJzMgrEoJExJ1GppbDzJnuPBD0LEhkQhAYmHFZgD0O4';
     const SMS_API_BASE = 'https://api.inalambria.express/v1';
@@ -82,6 +85,16 @@ class SupConfig {
 date_default_timezone_set('America/Mexico_City');
 
 if (session_status() === PHP_SESSION_NONE) {
+    // Cookie compartida entre subdominios (supersu.cloud-control.co y chefcontrol.cloud-control.co)
+    // para que la sesión sobreviva al saltar de un panel al otro (impersonación).
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path'     => '/',
+        'domain'   => '.cloud-control.co',
+        'secure'   => true,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
     session_start();
 }
 

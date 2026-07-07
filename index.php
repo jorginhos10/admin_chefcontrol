@@ -97,8 +97,7 @@ switch ($action) {
             $_SESSION['usuario_email']    = $u['email'] ?? '';
             $_SESSION['usuario_rol']      = $u['rol'];
             $_SESSION['impersonando']     = $id; // marca que esta sesión es impersonación activa
-            $chefPath = rtrim(str_replace('chefcontrol-sup', 'chefcontrol', $basePath), '/');
-            header("Location: {$chefPath}/dashboard");
+            header("Location: " . SupConfig::CLIENT_BASE_URL . "/dashboard");
             exit;
         } elseif ($sub === 'documentos' && $id) {
             echo json_encode($model->obtenerDocumentos($id));
