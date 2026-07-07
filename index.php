@@ -91,8 +91,7 @@ switch ($action) {
                 echo '<script>alert(' . json_encode('No se pudo generar el acceso: ' . ($tokenData['msg'] ?? '')) . ');history.back();</script>';
                 exit;
             }
-            $chefPath = rtrim(str_replace('chefcontrol-sup', 'chefcontrol', $basePath), '/');
-            header("Location: {$chefPath}/impersonar-login/{$tokenData['token']}");
+            header("Location: " . SupConfig::CLIENT_URL . "/impersonar-login/{$tokenData['token']}");
             exit;
         } elseif ($sub === 'documentos' && $id) {
             echo json_encode($model->obtenerDocumentos($id));

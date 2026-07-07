@@ -11,6 +11,9 @@ class SupConfig {
 
     const SESSION_TIMEOUT = 1800;
 
+    // Dominio del panel cliente (repo hermano cliente_chefcontrol), en otro subdominio
+    const CLIENT_URL = 'https://chefcontrol.cloud-control.co';
+
     // ── Inalambria Express (SMS) ─────────────────────────────────────────────────
     const SMS_API_KEY  = 'sk_live_xJzMgrEoJExJ1GppbDzJnuPBD0LEhkQhAYmHFZgD0O4';
     const SMS_API_BASE = 'https://api.inalambria.express/v1';
