@@ -103,6 +103,9 @@ function badgeEstado(string $estado): string {
         <a class="nav-item" href="<?= $basePath ?>/planes">
             <i class="fas fa-layer-group"></i> Planes
         </a>
+        <a class="nav-item" href="<?= $basePath ?>/usuarios">
+            <i class="fas fa-user-shield"></i> Usuarios
+        </a>
         <a class="nav-item" href="<?= $basePath ?>/configuraciones">
             <i class="fas fa-sliders"></i> Configuraciones
         </a>

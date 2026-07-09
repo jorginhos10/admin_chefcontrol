@@ -309,6 +309,51 @@ switch ($action) {
         require_once __DIR__ . '/vista/configuraciones/index.php';
         break;
 
+    case 'usuarios':
+        if (!$loggedIn) { header("Location: {$basePath}/login"); exit; }
+        require_once __DIR__ . '/modelo/adminModel.php';
+        $model = new AdminModel();
+        $sub   = $parts[1] ?? '';
+        $id    = (int)($parts[2] ?? 0);
+
+        // Vista principal — sin JSON
+        if (!$sub) {
+            $admins    = $model->obtenerAdmins();
+            $currentId = (int)($_SESSION['sup_id'] ?? 0);
+            require_once __DIR__ . '/vista/usuarios/index.php';
+            exit;
+        }
+
+        // Endpoints JSON
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if ($sub === 'crear') {
+                echo json_encode($model->crearAdmin(
+                    trim($_POST['nombre']   ?? ''),
+                    trim($_POST['username'] ?? ''),
+                    trim($_POST['email']    ?? ''),
+                    trim($_POST['password'] ?? '')
+                ));
+            } elseif ($sub === 'editar' && $id) {
+                echo json_encode($model->editarAdmin(
+                    $id,
+                    trim($_POST['nombre']   ?? ''),
+                    trim($_POST['username'] ?? ''),
+                    trim($_POST['email']    ?? ''),
+                    trim($_POST['password'] ?? '')
+                ));
+            } elseif ($sub === 'eliminar' && $id) {
+                echo json_encode($model->eliminarAdmin($id, (int)($_SESSION['sup_id'] ?? 0)));
+            } else {
+                echo json_encode(['ok' => false, 'msg' => 'Acción no válida.']);
+            }
+        } elseif ($sub === 'toggle' && $id) {
+            echo json_encode($model->toggleAdminActivo($id, (int)($_SESSION['sup_id'] ?? 0)));
+        } else {
+            echo json_encode(['ok' => false, 'msg' => 'Ruta no encontrada.']);
+        }
+        exit;
+
     default:
         if ($loggedIn) { header("Location: {$basePath}/dashboard"); exit; }
         header("Location: {$basePath}/login");

@@ -853,5 +853,99 @@ class AdminModel {
             return $this->dbSup->query("SELECT clave, valor FROM sup_config")->fetchAll(\PDO::FETCH_KEY_PAIR);
         } catch (\Throwable $e) { return []; }
     }
+
+    // ── Usuarios del panel (sup_admins) ──────────────────────────────────────
+
+    private function ensureAdminsTable(): void {
+        try {
+            $this->dbSup->exec(
+                "CREATE TABLE IF NOT EXISTS sup_admins (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    username VARCHAR(60) NOT NULL UNIQUE,
+                    password VARCHAR(255) NOT NULL,
+                    nombre VARCHAR(120) NOT NULL,
+                    email VARCHAR(150) NULL,
+                    activo TINYINT(1) NOT NULL DEFAULT 1,
+                    ultimo_login DATETIME NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+            );
+            $this->dbSup->exec("ALTER TABLE sup_admins ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
+        } catch (\Throwable $e) {}
+    }
+
+    public function obtenerAdmins(): array {
+        $this->ensureAdminsTable();
+        try {
+            return $this->dbSup->query(
+                "SELECT id, username, nombre, email, activo, ultimo_login, created_at
+                 FROM sup_admins ORDER BY id ASC"
+            )->fetchAll();
+        } catch (\Throwable $e) { return []; }
+    }
+
+    public function crearAdmin(string $nombre, string $username, string $email, string $password): array {
+        $this->ensureAdminsTable();
+        $username = strtolower(trim($username));
+        if (!$nombre || !$username || !$password) {
+            return ['ok' => false, 'msg' => 'Nombre, usuario y contraseña son obligatorios.'];
+        }
+        if (strlen($password) < 6) {
+            return ['ok' => false, 'msg' => 'La contraseña debe tener al menos 6 caracteres.'];
+        }
+        try {
+            $this->dbSup->prepare(
+                "INSERT INTO sup_admins (username, password, nombre, email, activo)
+                 VALUES (?, ?, ?, ?, 1)"
+            )->execute([$username, password_hash($password, PASSWORD_DEFAULT), $nombre, $email ?: null]);
+            return ['ok' => true, 'id' => (int)$this->dbSup->lastInsertId()];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'msg' => str_contains($e->getMessage(), 'Duplicate') ? "El usuario '{$username}' ya existe." : $e->getMessage()];
+        }
+    }
+
+    public function editarAdmin(int $id, string $nombre, string $username, string $email, string $password = ''): array {
+        $this->ensureAdminsTable();
+        $username = strtolower(trim($username));
+        if (!$nombre || !$username) {
+            return ['ok' => false, 'msg' => 'Nombre y usuario son obligatorios.'];
+        }
+        if ($password !== '' && strlen($password) < 6) {
+            return ['ok' => false, 'msg' => 'La contraseña debe tener al menos 6 caracteres.'];
+        }
+        try {
+            if ($password !== '') {
+                $this->dbSup->prepare(
+                    "UPDATE sup_admins SET username=?, nombre=?, email=?, password=? WHERE id=?"
+                )->execute([$username, $nombre, $email ?: null, password_hash($password, PASSWORD_DEFAULT), $id]);
+            } else {
+                $this->dbSup->prepare(
+                    "UPDATE sup_admins SET username=?, nombre=?, email=? WHERE id=?"
+                )->execute([$username, $nombre, $email ?: null, $id]);
+            }
+            return ['ok' => true];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'msg' => str_contains($e->getMessage(), 'Duplicate') ? "El usuario '{$username}' ya existe." : $e->getMessage()];
+        }
+    }
+
+    public function toggleAdminActivo(int $id, int $currentId): array {
+        if ($id === $currentId) return ['ok' => false, 'msg' => 'No puedes desactivar tu propia cuenta.'];
+        $this->ensureAdminsTable();
+        try {
+            $this->dbSup->prepare("UPDATE sup_admins SET activo = 1 - activo WHERE id = ?")->execute([$id]);
+            $nuevo = (int)$this->dbSup->query("SELECT activo FROM sup_admins WHERE id = {$id}")->fetchColumn();
+            return ['ok' => true, 'activo' => $nuevo];
+        } catch (\Throwable $e) { return ['ok' => false, 'msg' => $e->getMessage()]; }
+    }
+
+    public function eliminarAdmin(int $id, int $currentId): array {
+        if ($id === $currentId) return ['ok' => false, 'msg' => 'No puedes eliminar tu propia cuenta.'];
+        $this->ensureAdminsTable();
+        try {
+            $this->dbSup->prepare("DELETE FROM sup_admins WHERE id = ?")->execute([$id]);
+            return ['ok' => true];
+        } catch (\Throwable $e) { return ['ok' => false, 'msg' => $e->getMessage()]; }
+    }
 }
 ?>
