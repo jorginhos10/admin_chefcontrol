@@ -27,9 +27,17 @@ class AdminModel {
     // Migraciones sobre chefcontrol_sup (planes públicos/privados)
     private function migrarSup(): void {
         try {
-            $this->dbSup->exec(
-                "ALTER TABLE planes ADD COLUMN IF NOT EXISTS visibilidad VARCHAR(10) NOT NULL DEFAULT 'publico'"
-            );
+            // "ADD COLUMN IF NOT EXISTS" no lo soportan todas las versiones de MySQL/MariaDB
+            // (falla en silencio con el catch de abajo), así que se verifica manualmente.
+            $existe = $this->dbSup->query(
+                "SELECT COUNT(*) FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'planes' AND COLUMN_NAME = 'visibilidad'"
+            )->fetchColumn();
+            if (!$existe) {
+                $this->dbSup->exec(
+                    "ALTER TABLE planes ADD COLUMN visibilidad VARCHAR(10) NOT NULL DEFAULT 'publico'"
+                );
+            }
         } catch (\Throwable $e) {}
         try {
             $this->dbSup->exec(
