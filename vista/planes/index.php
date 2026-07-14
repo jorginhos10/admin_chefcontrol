@@ -29,18 +29,20 @@ $nombre   = htmlspecialchars($_SESSION['sup_nombre'] ?? 'Admin');
         .plan-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,.3); }
         .plan-card.inactivo { opacity: .5; }
         .plan-card-top {
-            padding: 22px 22px 18px;
+            padding: 42px 22px 18px;
             border-bottom: 1px solid #2d2d44;
         }
         .plan-badge-destacado {
             position: absolute;
-            top: 12px; right: 12px;
+            top: 14px; right: 14px;
             font-size: 10px;
             font-weight: 800;
-            padding: 3px 10px;
+            padding: 4px 10px;
             border-radius: 999px;
             text-transform: uppercase;
             letter-spacing: .5px;
+            z-index: 2;
+            line-height: 1.3;
         }
         .plan-color-dot {
             width: 40px; height: 40px;
@@ -228,7 +230,7 @@ $nombre   = htmlspecialchars($_SESSION['sup_nombre'] ?? 'Admin');
                 <?php endif; ?>
 
                 <?php $esPrivado = ($p['visibilidad'] ?? 'publico') === 'privado'; ?>
-                <div class="plan-badge-destacado" style="left:12px;right:auto;
+                <div class="plan-badge-destacado" style="left:14px;right:auto;
                             background:<?= $esPrivado ? '#f59e0b22' : '#22c55e22' ?>;
                             color:<?= $esPrivado ? '#f59e0b' : '#22c55e' ?>;
                             border:1px solid <?= $esPrivado ? '#f59e0b44' : '#22c55e44' ?>;">
