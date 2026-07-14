@@ -121,6 +121,7 @@ switch ($action) {
                 // Los checkboxes enviados = módulos ACTIVOS; los ausentes = desactivados
                 $todosModulos = ['ventas','cocina','mesas','domicilios','clientes','cupones',
                                  'pqrs','propinas','recetas','insumos','insumos-internos','inventario','proveedores',
+                                 'inventario-inmobiliario',
                                  'ingresos','perdidas','reportes','chat','notificaciones'];
                 $activos      = array_filter($todosModulos, fn($m) => !empty($_POST['modulos'][$m]));
                 $desactivados = array_values(array_diff($todosModulos, $activos));

@@ -41,6 +41,7 @@ $todosModulos = [
     'insumos'        => ['label'=>'Insumos',          'icon'=>'fa-boxes-stacked',        'desc'=>'Gestión de materias primas'],
     'insumos-internos' => ['label'=>'Uso Interno',    'icon'=>'fa-broom',                'desc'=>'Insumos de uso interno (limpieza, papelería, etc.)'],
     'inventario'     => ['label'=>'Inventario',       'icon'=>'fa-warehouse',            'desc'=>'Control de stock e inventario'],
+    'inventario-inmobiliario' => ['label'=>'Inv. Inmobiliario', 'icon'=>'fa-couch',       'desc'=>'Gestión de bienes e inventario inmobiliario'],
     'reportes'       => ['label'=>'Reportes',         'icon'=>'fa-chart-bar',            'desc'=>'Cierres Z, reportes X y KPIs'],
     'chat'           => ['label'=>'Chat interno',     'icon'=>'fa-comments',             'desc'=>'Mensajería entre empleados'],
     'cupones'        => ['label'=>'Cupones',          'icon'=>'fa-ticket',               'desc'=>'Descuentos y promociones'],

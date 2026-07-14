@@ -473,6 +473,7 @@ $nombre   = htmlspecialchars($_SESSION['sup_nombre'] ?? 'Admin');
                         'insumos'        => ['Insumos',          'fa-boxes-stacked'],
                         'insumos-internos' => ['Uso Interno',    'fa-broom'],
                         'inventario'     => ['Inventario',       'fa-warehouse'],
+                        'inventario-inmobiliario' => ['Inv. Inmobiliario', 'fa-couch'],
                         'proveedores'    => ['Proveedores',      'fa-truck'],
                         'ingresos'       => ['Ingresos',         'fa-arrow-trend-up'],
                         'perdidas'       => ['Pérdidas',         'fa-arrow-trend-down'],
