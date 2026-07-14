@@ -8,10 +8,12 @@ $nombre   = htmlspecialchars($_SESSION['sup_nombre'] ?? 'Admin');
 $planesDisponibles = [];
 try {
     $opts = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC];
-    $dbSup = new PDO("mysql:host=" . SupConfig::DB_HOST . ";dbname=chefcontrol_sup;charset=utf8mb4",
+    $dbSup = new PDO("mysql:host=" . SupConfig::DB_HOST . ";dbname=" . SupConfig::DB_NAME_SUP . ";charset=utf8mb4",
                      SupConfig::DB_USER, SupConfig::DB_PASS, $opts);
     $planesDisponibles = $dbSup->query("SELECT id, nombre, slug, precio, periodo, color FROM planes WHERE activo=1 ORDER BY orden ASC")->fetchAll();
-} catch (\Throwable $e) {}
+} catch (\Throwable $e) {
+    error_log('Facturación — no se pudo cargar planesDisponibles: ' . $e->getMessage());
+}
 
 // Estadísticas rápidas
 $totalCuentas  = count($cuentas);
