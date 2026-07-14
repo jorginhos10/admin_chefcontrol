@@ -290,9 +290,14 @@ class AdminModel {
     }
 
     public function actualizarPlan(int $id, string $plan, ?string $vence, ?string $notas): array {
-        $planesValidos = ['gratuito','basico','pro','enterprise'];
-        if (!in_array($plan, $planesValidos)) {
-            return ['ok' => false, 'msg' => 'Plan no válido.'];
+        try {
+            $existe = $this->dbSup->prepare("SELECT COUNT(*) FROM planes WHERE slug = ?");
+            $existe->execute([$plan]);
+            if (!$existe->fetchColumn()) {
+                return ['ok' => false, 'msg' => "El plan '{$plan}' no existe."];
+            }
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'msg' => 'No se pudo validar el plan: ' . $e->getMessage()];
         }
         try {
             $this->db->prepare(
