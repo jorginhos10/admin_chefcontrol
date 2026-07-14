@@ -4,7 +4,8 @@ $basePath = SupConfig::getBasePath();
 $baseUrl  = SupConfig::getBaseUrl();
 $nombre   = htmlspecialchars($_SESSION['sup_nombre'] ?? 'Admin');
 
-$registroWeb = ($supConfig['registro_web'] ?? '1') === '1';
+$registroWeb     = ($supConfig['registro_web']     ?? '1') === '1';
+$mostrarBloqueados = ($supConfig['mostrar_bloqueados'] ?? '0') === '1';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -117,6 +118,34 @@ $registroWeb = ($supConfig['registro_web'] ?? '1') === '1';
             </div>
         </div>
 
+        <!-- Sección: Módulos por plan -->
+        <div class="cfg-section">
+            <div class="cfg-section-head">
+                <i class="fas fa-crown"></i>
+                <h3>Módulos por plan</h3>
+            </div>
+
+            <div class="cfg-item">
+                <div class="cfg-item-info">
+                    <h4>Mostrar módulos que no pertenecen al plan</h4>
+                    <p>Si está activado, los módulos que el plan del restaurante no incluye aparecen en gris con
+                       una corona <i class="fas fa-crown" style="color:#f59e0b;"></i> en vez de ocultarse, y al
+                       hacer clic se les invita a cambiar de plan. Si está desactivado, esos módulos se ocultan
+                       por completo (comportamiento anterior).</p>
+                    <div class="cfg-status" id="statusMostrarBloqueados"
+                         style="color:<?= $mostrarBloqueados ? '#22c55e' : '#ef4444' ?>;">
+                        <?= $mostrarBloqueados ? 'Activado' : 'Desactivado' ?>
+                    </div>
+                </div>
+                <label class="cfg-toggle">
+                    <input type="checkbox" id="toggleMostrarBloqueados"
+                           <?= $mostrarBloqueados ? 'checked' : '' ?>
+                           onchange="toggleConfig('mostrar_bloqueados', this.checked)">
+                    <span class="cfg-toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -129,8 +158,9 @@ async function toggleConfig(clave, valor) {
         const res  = await fetch('<?= $basePath ?>/configuraciones', { method: 'POST', body: fd });
         const data = await res.json();
         if (!data.ok) { alert(data.msg || 'Error al guardar.'); return; }
-        if (clave === 'registro_web') {
-            const st = document.getElementById('statusRegistroWeb');
+        const statusIds = { registro_web: 'statusRegistroWeb', mostrar_bloqueados: 'statusMostrarBloqueados' };
+        if (statusIds[clave]) {
+            const st = document.getElementById(statusIds[clave]);
             st.textContent = valor ? 'Activado' : 'Desactivado';
             st.style.color  = valor ? '#22c55e' : '#ef4444';
         }
