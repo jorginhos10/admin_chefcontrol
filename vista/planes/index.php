@@ -555,6 +555,7 @@ function abrirCrear() {
 }
 
 function abrirEditar(p) {
+  try {
     if (!p) { alert('No se pudo leer la información del plan.'); return; }
     document.getElementById('planId').value          = p.id;
     document.getElementById('modalTitulo').innerHTML = '<i class="fas fa-pen" style="color:#f59e0b;margin-right:8px;"></i>Editar plan';
@@ -589,6 +590,10 @@ function abrirEditar(p) {
     setVisibilidad(p.visibilidad === 'privado' ? 'privado' : 'publico');
 
     document.getElementById('modalPlan').style.display = 'flex';
+  } catch (e) {
+    console.error('abrirEditar:', e);
+    alert('No se pudo abrir el editor de este plan.\n\nError: ' + e.message);
+  }
 }
 
 function toggleTodosModulos(estado) {
@@ -640,11 +645,17 @@ document.getElementById('formPlan').addEventListener('submit', async function(e)
 
     try {
         const res  = await fetch(url, { method: 'POST', body: fd });
-        const data = await res.json();
+        const raw  = await res.text();
+        let data;
+        try { data = JSON.parse(raw); }
+        catch (parseErr) {
+            console.error('Respuesta no-JSON del servidor:', raw);
+            throw new Error('El servidor respondió algo inesperado (revisa la consola).');
+        }
         if (data.ok) { cerrarModal(); location.reload(); }
         else { err.style.display = 'block'; err.textContent = data.msg || 'Error al guardar.'; }
     } catch(ex) {
-        err.style.display = 'block'; err.textContent = 'Error de conexión.';
+        err.style.display = 'block'; err.textContent = ex.message || 'Error de conexión.';
     }
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-save"></i> Guardar plan';
