@@ -486,7 +486,7 @@ async function generarInvitacion() {
         const data = await res.json();
         if (!data.ok) { alert(data.msg || 'Error al generar el link.'); return; }
 
-        const chefBase = '<?= rtrim(str_replace('chefcontrol-sup', 'chefcontrol', $baseUrl), '/') ?>';
+        const chefBase = '<?= rtrim(SupConfig::CLIENT_URL, '/') ?>';
         const url      = `${chefBase}/registro?token=${data.token}`;
 
         document.getElementById('invitarUrl').value   = url;
@@ -667,7 +667,7 @@ document.getElementById('formEditar').addEventListener('submit', async function(
 
 // ── Documentos ────────────────────────────────────────────────────────────
 let _docsId = 0;
-const chefBase = '<?= rtrim(str_replace('chefcontrol-sup', 'chefcontrol', $baseUrl), '/') ?>';
+const chefBase = '<?= rtrim(SupConfig::CLIENT_URL, '/') ?>';
 const DOCS_CAMPOS = [
     {key:'cedula_frente',  label:'Cédula (frente)'},
     {key:'cedula_trasera', label:'Cédula (trasera)'},
