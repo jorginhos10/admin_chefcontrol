@@ -120,7 +120,7 @@ switch ($action) {
             } elseif ($sub === 'modulos') {
                 // Los checkboxes enviados = módulos ACTIVOS; los ausentes = desactivados
                 $todosModulos = ['ventas','cocina','mesas','domicilios','clientes','cupones',
-                                 'pqrs','propinas','recetas','insumos','inventario','proveedores',
+                                 'pqrs','propinas','recetas','insumos','insumos-internos','inventario','proveedores',
                                  'ingresos','perdidas','reportes','chat','notificaciones'];
                 $activos      = array_filter($todosModulos, fn($m) => !empty($_POST['modulos'][$m]));
                 $desactivados = array_values(array_diff($todosModulos, $activos));
@@ -136,7 +136,7 @@ switch ($action) {
         $comercio = $model->obtenerPorId($id);
         if (!$comercio) { header("Location: {$basePath}/dashboard"); exit; }
         $totalUsuarios = $model->obtenerTotalUsuarios($id);
-        $planesReales  = $model->obtenerPlanes();
+        $planesReales  = $model->obtenerPlanesDisponibles($id);
         require_once __DIR__ . '/vista/config/index.php';
         break;
 
@@ -149,7 +149,14 @@ switch ($action) {
 
         // Vista principal — sin JSON
         if (!$sub) {
-            $planes = $model->obtenerPlanes();
+            $planes           = $model->obtenerPlanes();
+            $comercios        = $model->obtenerComercios();
+            $planComerciosMap = [];
+            foreach ($planes as $p) {
+                if (($p['visibilidad'] ?? 'publico') === 'privado') {
+                    $planComerciosMap[$p['id']] = $model->obtenerComerciosDePlan((int)$p['id']);
+                }
+            }
             require_once __DIR__ . '/vista/planes/index.php';
             exit;
         }
@@ -157,21 +164,25 @@ switch ($action) {
         // Endpoints JSON
         header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $cars    = array_values(array_filter(array_map('trim', (array)($_POST['caracteristicas'] ?? []))));
-            $modulos = array_values(array_filter((array)($_POST['modulos'] ?? [])));
+            $cars        = array_values(array_filter(array_map('trim', (array)($_POST['caracteristicas'] ?? []))));
+            $modulos     = array_values(array_filter((array)($_POST['modulos'] ?? [])));
+            $visibilidad = trim($_POST['visibilidad'] ?? 'publico');
+            $comerciosSel= array_values(array_filter(array_map('intval', (array)($_POST['comercios'] ?? []))));
             if ($sub === 'crear') {
                 echo json_encode($model->crearPlan(
                     trim($_POST['nombre']      ?? ''), trim($_POST['slug']        ?? ''),
                     trim($_POST['descripcion'] ?? ''), (float)($_POST['precio']   ?? 0),
                     trim($_POST['periodo']     ?? 'mensual'), trim($_POST['color'] ?? '#6366f1'),
-                    $cars, (int)($_POST['destacado'] ?? 0), (int)($_POST['orden'] ?? 0), $modulos
+                    $cars, (int)($_POST['destacado'] ?? 0), (int)($_POST['orden'] ?? 0), $modulos,
+                    $visibilidad, $comerciosSel
                 ));
             } elseif ($sub === 'editar' && $id) {
                 echo json_encode($model->editarPlan(
                     $id, trim($_POST['nombre'] ?? ''), trim($_POST['slug']        ?? ''),
                     trim($_POST['descripcion'] ?? ''), (float)($_POST['precio']   ?? 0),
                     trim($_POST['periodo']     ?? 'mensual'), trim($_POST['color'] ?? '#6366f1'),
-                    $cars, (int)($_POST['destacado'] ?? 0), (int)($_POST['orden'] ?? 0), $modulos
+                    $cars, (int)($_POST['destacado'] ?? 0), (int)($_POST['orden'] ?? 0), $modulos,
+                    $visibilidad, $comerciosSel
                 ));
             } elseif ($sub === 'eliminar' && $id) {
                 echo json_encode($model->eliminarPlan($id));

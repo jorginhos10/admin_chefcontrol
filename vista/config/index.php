@@ -39,6 +39,7 @@ $todosModulos = [
     'clientes'       => ['label'=>'Clientes',         'icon'=>'fa-users',                'desc'=>'Base de datos de clientes'],
     'recetas'        => ['label'=>'Recetas',          'icon'=>'fa-book-open',            'desc'=>'Fichas técnicas de productos'],
     'insumos'        => ['label'=>'Insumos',          'icon'=>'fa-boxes-stacked',        'desc'=>'Gestión de materias primas'],
+    'insumos-internos' => ['label'=>'Uso Interno',    'icon'=>'fa-broom',                'desc'=>'Insumos de uso interno (limpieza, papelería, etc.)'],
     'inventario'     => ['label'=>'Inventario',       'icon'=>'fa-warehouse',            'desc'=>'Control de stock e inventario'],
     'reportes'       => ['label'=>'Reportes',         'icon'=>'fa-chart-bar',            'desc'=>'Cierres Z, reportes X y KPIs'],
     'chat'           => ['label'=>'Chat interno',     'icon'=>'fa-comments',             'desc'=>'Mensajería entre empleados'],

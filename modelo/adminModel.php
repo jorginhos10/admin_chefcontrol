@@ -21,6 +21,29 @@ class AdminModel {
         $this->dbSup = new PDO("mysql:host={$host};dbname=" . SupConfig::DB_NAME_SUP . ";charset={$charset}", $user, $pass, $opts);
 
         $this->migrar();
+        $this->migrarSup();
+    }
+
+    // Migraciones sobre chefcontrol_sup (planes públicos/privados)
+    private function migrarSup(): void {
+        try {
+            $this->dbSup->exec(
+                "ALTER TABLE planes ADD COLUMN IF NOT EXISTS visibilidad VARCHAR(10) NOT NULL DEFAULT 'publico'"
+            );
+        } catch (\Throwable $e) {}
+        try {
+            $this->dbSup->exec(
+                "CREATE TABLE IF NOT EXISTS plan_comercios (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    plan_id INT NOT NULL,
+                    comercio_id INT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE KEY uq_plan_comercio (plan_id, comercio_id),
+                    INDEX idx_plan (plan_id),
+                    INDEX idx_comercio (comercio_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+            );
+        } catch (\Throwable $e) {}
     }
 
     private function migrar(): void {
@@ -374,18 +397,22 @@ class AdminModel {
 
     public function crearPlan(string $nombre, string $slug, string $desc, float $precio,
                                string $periodo, string $color, array $cars,
-                               int $destacado, int $orden, array $modulos = []): array {
+                               int $destacado, int $orden, array $modulos = [],
+                               string $visibilidad = 'publico', array $comercios = []): array {
         $slug = strtolower(trim(preg_replace('/[^a-z0-9\-]/', '', str_replace(' ', '-', $slug))));
         if (!$nombre || !$slug) return ['ok' => false, 'msg' => 'Nombre y slug son obligatorios.'];
+        $visibilidad = $visibilidad === 'privado' ? 'privado' : 'publico';
         try {
             $this->dbSup->prepare(
-                "INSERT INTO planes (nombre, slug, descripcion, precio, periodo, color, caracteristicas, modulos, destacado, activo, orden)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)"
+                "INSERT INTO planes (nombre, slug, descripcion, precio, periodo, color, caracteristicas, modulos, destacado, activo, orden, visibilidad)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)"
             )->execute([$nombre, $slug, $desc ?: null, $precio, $periodo, $color,
                         json_encode(array_values(array_filter(array_map('trim', $cars)))),
                         json_encode(array_values($modulos)),
-                        $destacado ? 1 : 0, $orden ?: 0]);
-            return ['ok' => true, 'id' => (int)$this->dbSup->lastInsertId()];
+                        $destacado ? 1 : 0, $orden ?: 0, $visibilidad]);
+            $id = (int)$this->dbSup->lastInsertId();
+            $this->guardarComerciosDePlan($id, $visibilidad === 'privado' ? $comercios : []);
+            return ['ok' => true, 'id' => $id];
         } catch (\Throwable $e) {
             return ['ok' => false, 'msg' => str_contains($e->getMessage(), 'Duplicate') ? "El slug '{$slug}' ya existe." : $e->getMessage()];
         }
@@ -393,21 +420,64 @@ class AdminModel {
 
     public function editarPlan(int $id, string $nombre, string $slug, string $desc, float $precio,
                                 string $periodo, string $color, array $cars,
-                                int $destacado, int $orden, array $modulos = []): array {
+                                int $destacado, int $orden, array $modulos = [],
+                                string $visibilidad = 'publico', array $comercios = []): array {
         $slug = strtolower(trim(preg_replace('/[^a-z0-9\-]/', '', str_replace(' ', '-', $slug))));
         if (!$nombre || !$slug) return ['ok' => false, 'msg' => 'Nombre y slug son obligatorios.'];
+        $visibilidad = $visibilidad === 'privado' ? 'privado' : 'publico';
         try {
             $this->dbSup->prepare(
                 "UPDATE planes SET nombre=?, slug=?, descripcion=?, precio=?, periodo=?, color=?,
-                 caracteristicas=?, modulos=?, destacado=?, orden=? WHERE id=?"
+                 caracteristicas=?, modulos=?, destacado=?, orden=?, visibilidad=? WHERE id=?"
             )->execute([$nombre, $slug, $desc ?: null, $precio, $periodo, $color,
                         json_encode(array_values(array_filter(array_map('trim', $cars)))),
                         json_encode(array_values($modulos)),
-                        $destacado ? 1 : 0, $orden ?: 0, $id]);
+                        $destacado ? 1 : 0, $orden ?: 0, $visibilidad, $id]);
+            $this->guardarComerciosDePlan($id, $visibilidad === 'privado' ? $comercios : []);
             return ['ok' => true];
         } catch (\Throwable $e) {
             return ['ok' => false, 'msg' => str_contains($e->getMessage(), 'Duplicate') ? "El slug '{$slug}' ya existe." : $e->getMessage()];
         }
+    }
+
+    // Reemplaza la lista de comercios con acceso a un plan privado (borra e inserta de nuevo)
+    private function guardarComerciosDePlan(int $planId, array $comercioIds): void {
+        try {
+            $this->dbSup->prepare("DELETE FROM plan_comercios WHERE plan_id = ?")->execute([$planId]);
+            $comercioIds = array_values(array_unique(array_filter(array_map('intval', $comercioIds))));
+            if (empty($comercioIds)) return;
+            $stmt = $this->dbSup->prepare(
+                "INSERT IGNORE INTO plan_comercios (plan_id, comercio_id) VALUES (?, ?)"
+            );
+            foreach ($comercioIds as $cid) {
+                $stmt->execute([$planId, $cid]);
+            }
+        } catch (\Throwable $e) {}
+    }
+
+    // IDs de los comercios con acceso a un plan privado (para precargar el selector al editar)
+    public function obtenerComerciosDePlan(int $planId): array {
+        try {
+            $stmt = $this->dbSup->prepare("SELECT comercio_id FROM plan_comercios WHERE plan_id = ?");
+            $stmt->execute([$planId]);
+            return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+        } catch (\Throwable $e) { return []; }
+    }
+
+    // Planes visibles/seleccionables para un comercio: todos los públicos activos,
+    // más los privados activos a los que este comercio tenga acceso asignado.
+    public function obtenerPlanesDisponibles(int $comercioId): array {
+        try {
+            $stmt = $this->dbSup->prepare(
+                "SELECT p.* FROM planes p
+                 WHERE p.activo = 1
+                   AND (p.visibilidad = 'publico'
+                        OR EXISTS (SELECT 1 FROM plan_comercios pc WHERE pc.plan_id = p.id AND pc.comercio_id = ?))
+                 ORDER BY p.orden ASC, p.id ASC"
+            );
+            $stmt->execute([$comercioId]);
+            return $stmt->fetchAll();
+        } catch (\Throwable $e) { return []; }
     }
 
     public function togglePlanActivo(int $id): array {

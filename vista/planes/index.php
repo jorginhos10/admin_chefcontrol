@@ -89,6 +89,8 @@ $nombre   = htmlspecialchars($_SESSION['sup_nombre'] ?? 'Admin');
         .btn-sm.danger:hover { background: #3b1c1c; color: #f87171; border-color: #7f1d1d; }
         .btn-sm.primary { background: #1a1a4a; border-color: #3730a3; color: #818cf8; }
         .btn-sm.primary:hover { background: #2d2d6a; }
+        .visibilidad-btn.active { background: #2d1a5c; border-color: #7c3aed; color: #c4b5fd; }
+        .comercio-row:hover { background: #1e1e30; }
 
         /* Modal */
         .modal-overlay {
@@ -224,6 +226,15 @@ $nombre   = htmlspecialchars($_SESSION['sup_nombre'] ?? 'Admin');
                     <i class="fas fa-star"></i> Recomendado
                 </div>
                 <?php endif; ?>
+
+                <?php $esPrivado = ($p['visibilidad'] ?? 'publico') === 'privado'; ?>
+                <div class="plan-badge-destacado" style="left:12px;right:auto;
+                            background:<?= $esPrivado ? '#f59e0b22' : '#22c55e22' ?>;
+                            color:<?= $esPrivado ? '#f59e0b' : '#22c55e' ?>;
+                            border:1px solid <?= $esPrivado ? '#f59e0b44' : '#22c55e44' ?>;">
+                    <i class="fas <?= $esPrivado ? 'fa-lock' : 'fa-globe' ?>"></i>
+                    <?= $esPrivado ? 'Privado' : 'Público' ?>
+                </div>
 
                 <div class="plan-card-top">
                     <div class="plan-color-dot"
@@ -380,6 +391,46 @@ $nombre   = htmlspecialchars($_SESSION['sup_nombre'] ?? 'Admin');
                 </div>
             </div>
 
+            <!-- Visibilidad -->
+            <div>
+                <label class="field-label">Visibilidad</label>
+                <div style="display:flex;gap:8px;">
+                    <button type="button" class="btn-sm visibilidad-btn" id="btnVisPublico"
+                            onclick="setVisibilidad('publico')"
+                            style="flex:1;justify-content:center;padding:9px;">
+                        <i class="fas fa-globe"></i> Público (todos los restaurantes)
+                    </button>
+                    <button type="button" class="btn-sm visibilidad-btn" id="btnVisPrivado"
+                            onclick="setVisibilidad('privado')"
+                            style="flex:1;justify-content:center;padding:9px;">
+                        <i class="fas fa-lock"></i> Privado (solo restaurantes elegidos)
+                    </button>
+                </div>
+                <input type="hidden" id="planVisibilidad" name="visibilidad" value="publico">
+
+                <div id="comerciosPickerWrap" style="display:none;margin-top:10px;">
+                    <input class="field-input" id="comerciosBuscar" type="text"
+                           placeholder="Buscar restaurante..." oninput="filtrarComercios(this.value)"
+                           style="margin-bottom:8px;">
+                    <div id="comerciosList" style="max-height:180px;overflow-y:auto;display:flex;
+                         flex-direction:column;gap:4px;border:1px solid #2d2d44;border-radius:8px;padding:8px;">
+                        <?php foreach ($comercios ?? [] as $c): ?>
+                        <label class="comercio-row" data-nombre="<?= strtolower(htmlspecialchars($c['nombre'])) ?>"
+                               style="display:flex;align-items:center;gap:8px;padding:5px 6px;
+                                      border-radius:6px;cursor:pointer;font-size:12px;color:#aaa;">
+                            <input type="checkbox" name="comercios[]" value="<?= (int)$c['id'] ?>"
+                                   style="width:14px;height:14px;accent-color:#7c3aed;cursor:pointer;">
+                            <?= htmlspecialchars($c['nombre']) ?>
+                            <span style="color:#555;">— <?= htmlspecialchars($c['slug'] ?? '') ?></span>
+                        </label>
+                        <?php endforeach; ?>
+                        <?php if (empty($comercios)): ?>
+                        <div style="color:#555;font-size:12px;text-align:center;padding:10px;">No hay restaurantes registrados.</div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
             <!-- Características -->
             <div>
                 <label class="field-label">Características</label>
@@ -420,6 +471,7 @@ $nombre   = htmlspecialchars($_SESSION['sup_nombre'] ?? 'Admin');
                         'propinas'       => ['Propinas',         'fa-hand-holding-dollar'],
                         'recetas'        => ['Recetas',          'fa-book-open'],
                         'insumos'        => ['Insumos',          'fa-boxes-stacked'],
+                        'insumos-internos' => ['Uso Interno',    'fa-broom'],
                         'inventario'     => ['Inventario',       'fa-warehouse'],
                         'proveedores'    => ['Proveedores',      'fa-truck'],
                         'ingresos'       => ['Ingresos',         'fa-arrow-trend-up'],
@@ -456,10 +508,33 @@ $nombre   = htmlspecialchars($_SESSION['sup_nombre'] ?? 'Admin');
 
 <script>
 const BP = '<?= $basePath ?>';
+const PLAN_COMERCIOS = <?= json_encode($planComerciosMap ?? [], JSON_FORCE_OBJECT) ?>;
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 function cerrarModal() { document.getElementById('modalPlan').style.display = 'none'; }
 document.getElementById('modalPlan').addEventListener('click', function(e) { if (e.target===this) cerrarModal(); });
+
+// ── Visibilidad (público / privado) ────────────────────────────────────────────
+function setVisibilidad(v) {
+    document.getElementById('planVisibilidad').value = v;
+    document.getElementById('btnVisPublico').classList.toggle('active', v === 'publico');
+    document.getElementById('btnVisPrivado').classList.toggle('active', v === 'privado');
+    document.getElementById('comerciosPickerWrap').style.display = v === 'privado' ? 'block' : 'none';
+}
+
+function filtrarComercios(term) {
+    term = term.toLowerCase().trim();
+    document.querySelectorAll('#comerciosList .comercio-row').forEach(row => {
+        row.style.display = !term || row.dataset.nombre.includes(term) ? 'flex' : 'none';
+    });
+}
+
+function marcarComercios(ids) {
+    const set = new Set((ids || []).map(String));
+    document.querySelectorAll('#comerciosList input[type=checkbox]').forEach(cb => {
+        cb.checked = set.has(cb.value);
+    });
+}
 
 function abrirCrear() {
     document.getElementById('planId').value        = '';
@@ -471,6 +546,10 @@ function abrirCrear() {
     document.getElementById('featuresList').innerHTML = '';
     addFeature('');
     toggleTodosModulos(false);
+    document.getElementById('comerciosBuscar').value = '';
+    filtrarComercios('');
+    marcarComercios([]);
+    setVisibilidad('publico');
     document.getElementById('modalPlan').style.display = 'flex';
 }
 
@@ -498,6 +577,12 @@ function abrirEditar(p) {
     document.querySelectorAll('#modulosGrid input[type=checkbox]').forEach(cb => {
         cb.checked = mods.includes(cb.value);
     });
+
+    // Visibilidad y restaurantes con acceso (si es privado)
+    document.getElementById('comerciosBuscar').value = '';
+    filtrarComercios('');
+    marcarComercios(PLAN_COMERCIOS[p.id] || []);
+    setVisibilidad(p.visibilidad === 'privado' ? 'privado' : 'publico');
 
     document.getElementById('modalPlan').style.display = 'flex';
 }
