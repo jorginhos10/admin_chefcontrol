@@ -285,7 +285,7 @@ $nombre   = htmlspecialchars($_SESSION['sup_nombre'] ?? 'Admin');
                 </div>
 
                 <div class="plan-actions">
-                    <button class="btn-sm primary" onclick="abrirEditar(<?= htmlspecialchars(json_encode($p), ENT_QUOTES) ?>)">
+                    <button class="btn-sm primary" onclick="abrirEditar(<?= htmlspecialchars(json_encode($p, JSON_INVALID_UTF8_SUBSTITUTE), ENT_QUOTES) ?>)">
                         <i class="fas fa-pen"></i> Editar
                     </button>
                     <button class="btn-sm" id="btn-toggle-<?= $p['id'] ?>"
@@ -555,6 +555,7 @@ function abrirCrear() {
 }
 
 function abrirEditar(p) {
+    if (!p) { alert('No se pudo leer la información del plan.'); return; }
     document.getElementById('planId').value          = p.id;
     document.getElementById('modalTitulo').innerHTML = '<i class="fas fa-pen" style="color:#f59e0b;margin-right:8px;"></i>Editar plan';
     document.getElementById('planNombre').value      = p.nombre   || '';
@@ -568,13 +569,15 @@ function abrirEditar(p) {
     document.getElementById('planDestacado').checked = p.destacado == 1;
     document.getElementById('planError').style.display = 'none';
 
-    const cars = JSON.parse(p.caracteristicas || '[]');
+    let cars = [];
+    try { cars = JSON.parse(p.caracteristicas || '[]'); } catch (e) { cars = []; }
     document.getElementById('featuresList').innerHTML = '';
     cars.forEach(c => addFeature(c));
     if (!cars.length) addFeature('');
 
     // Módulos
-    const mods = JSON.parse(p.modulos || '[]');
+    let mods = [];
+    try { mods = JSON.parse(p.modulos || '[]'); } catch (e) { mods = []; }
     document.querySelectorAll('#modulosGrid input[type=checkbox]').forEach(cb => {
         cb.checked = mods.includes(cb.value);
     });
