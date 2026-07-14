@@ -152,10 +152,13 @@ switch ($action) {
         if (!$sub) {
             $planes           = $model->obtenerPlanes();
             $comercios        = $model->obtenerComercios();
-            $planComerciosMap = [];
+            // stdClass (no array): así json_encode() siempre lo serializa como objeto {},
+            // sin necesitar JSON_FORCE_OBJECT — que forzaría también los arrays de
+            // comercios internos a {} cuando un plan privado no tiene ninguno asignado.
+            $planComerciosMap = new stdClass();
             foreach ($planes as $p) {
                 if (($p['visibilidad'] ?? 'publico') === 'privado') {
-                    $planComerciosMap[$p['id']] = $model->obtenerComerciosDePlan((int)$p['id']);
+                    $planComerciosMap->{$p['id']} = $model->obtenerComerciosDePlan((int)$p['id']);
                 }
             }
             require_once __DIR__ . '/vista/planes/index.php';

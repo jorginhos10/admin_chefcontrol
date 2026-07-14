@@ -509,7 +509,7 @@ $nombre   = htmlspecialchars($_SESSION['sup_nombre'] ?? 'Admin');
 
 <script>
 const BP = '<?= $basePath ?>';
-const PLAN_COMERCIOS = <?= json_encode($planComerciosMap ?? [], JSON_FORCE_OBJECT) ?>;
+const PLAN_COMERCIOS = <?= json_encode($planComerciosMap ?? new stdClass()) ?>;
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 function cerrarModal() { document.getElementById('modalPlan').style.display = 'none'; }
@@ -531,7 +531,7 @@ function filtrarComercios(term) {
 }
 
 function marcarComercios(ids) {
-    const set = new Set((ids || []).map(String));
+    const set = new Set((Array.isArray(ids) ? ids : []).map(String));
     document.querySelectorAll('#comerciosList input[type=checkbox]').forEach(cb => {
         cb.checked = set.has(cb.value);
     });
