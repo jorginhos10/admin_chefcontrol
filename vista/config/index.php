@@ -5,12 +5,17 @@ $basePath = SupConfig::getBasePath();
 $baseUrl  = SupConfig::getBaseUrl();
 $supNombre = htmlspecialchars($_SESSION['sup_nombre'] ?? 'Admin');
 
-$planes = [
-    'gratuito'   => ['label'=>'Gratuito',    'color'=>'#6b7280', 'icon'=>'fa-seedling',    'desc'=>'Acceso básico sin costo'],
-    'basico'     => ['label'=>'Básico',      'color'=>'#3b82f6', 'icon'=>'fa-star',         'desc'=>'Funcionalidades esenciales'],
-    'pro'        => ['label'=>'Pro',         'color'=>'#8b5cf6', 'icon'=>'fa-rocket',       'desc'=>'Todo incluido + soporte'],
-    'enterprise' => ['label'=>'Enterprise',  'color'=>'#f59e0b', 'icon'=>'fa-crown',        'desc'=>'Personalizado para grandes operaciones'],
-];
+// Planes reales configurados en /planes (solo los activos son seleccionables aquí)
+$planes = [];
+foreach ($planesReales ?? [] as $p) {
+    if (!(int)$p['activo']) continue;
+    $planes[$p['slug']] = [
+        'label' => $p['nombre'],
+        'color' => $p['color'] ?: '#6b7280',
+        'icon'  => 'fa-crown',
+        'desc'  => $p['descripcion'] ?? '',
+    ];
+}
 
 $idiomas = [
     'es' => ['label'=>'Español',    'flag'=>'🇪🇸', 'desc'=>'Idioma predeterminado'],
@@ -272,7 +277,12 @@ $todosModulos = [
                     <p class="card-desc">Cambia el plan activo de este restaurante y configura la fecha de vencimiento.</p>
 
                     <!-- Plan actual badge -->
-                    <?php $pi = $planes[$planActual]; ?>
+                    <?php $pi = $planes[$planActual] ?? [
+                        'label' => ucfirst($planActual),
+                        'color' => '#6b7280',
+                        'icon'  => 'fa-question',
+                        'desc'  => 'Este plan ya no está disponible o fue desactivado.',
+                    ]; ?>
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;
                                 background:#12121e;border:1px solid #2d2d44;border-radius:10px;padding:16px;">
                         <div style="width:44px;height:44px;border-radius:10px;display:flex;align-items:center;

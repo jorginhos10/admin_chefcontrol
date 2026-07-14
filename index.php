@@ -136,6 +136,7 @@ switch ($action) {
         $comercio = $model->obtenerPorId($id);
         if (!$comercio) { header("Location: {$basePath}/dashboard"); exit; }
         $totalUsuarios = $model->obtenerTotalUsuarios($id);
+        $planesReales  = $model->obtenerPlanes();
         require_once __DIR__ . '/vista/config/index.php';
         break;
 
