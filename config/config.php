@@ -11,6 +11,23 @@ class SupConfig {
 
     const SESSION_TIMEOUT = 1800;
 
+    // Bases de datos de los negocios externos que este panel puede consultar
+    // (solo lectura de su tabla `usuarios`, cada uno vive en su propia BD).
+    const DB_NEGOCIOS = [
+        'storecontrol' => [
+            'host'   => 'localhost',
+            'dbname' => 'jorginho_cliente_storecontrol',
+            'user'   => 'jorginho_cliente_storecontrol',
+            'pass'   => 'jorginho10.',
+        ],
+        'phonecontrol' => [
+            'host'   => 'localhost',
+            'dbname' => 'jorginho_cliente_phonecontrol',
+            'user'   => 'jorginho_cliente_phonecontrol',
+            'pass'   => 'jorginho10.',
+        ],
+    ];
+
     // Dominio del panel cliente (repo hermano cliente_chefcontrol), en otro subdominio
     const CLIENT_URL = 'https://chefcontrol.cloud-control.co';
 
