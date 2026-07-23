@@ -3,8 +3,6 @@ require_once __DIR__ . '/../../config/config.php';
 $basePath = SupConfig::getBasePath();
 $baseUrl  = SupConfig::getBaseUrl();
 $nombre   = htmlspecialchars($_SESSION['sup_nombre'] ?? 'Admin');
-$appSeleccionada = $appSeleccionada ?? 'sup';
-$usuariosNegocio = $usuariosNegocio ?? [];
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -86,27 +84,15 @@ $usuariosNegocio = $usuariosNegocio ?? [];
     <header class="topbar">
         <div>
             <h2>Usuarios</h2>
-            <p>
-                <?= $appSeleccionada === 'sup' ? 'Administradores con acceso al panel SUP' : 'Usuarios del negocio (solo lectura)' ?>
-            </p>
+            <p>Administradores con acceso al panel SUP</p>
         </div>
         <div style="display:flex;gap:12px;align-items:center;">
-            <select id="selectorNegocio"
-                    onchange="location.href = '<?= $basePath ?>/usuarios?app=' + this.value"
-                    style="background:#12121e;border:1px solid #2d2d44;border-radius:8px;
-                           padding:9px 14px;color:#e0e0e0;font-size:13px;outline:none;">
-                <option value="sup" <?= $appSeleccionada === 'sup' ? 'selected' : '' ?>>Admins del panel SUP</option>
-                <option value="storecontrol" <?= $appSeleccionada === 'storecontrol' ? 'selected' : '' ?>>Usuarios de StoreControl</option>
-                <option value="phonecontrol" <?= $appSeleccionada === 'phonecontrol' ? 'selected' : '' ?>>Usuarios de PhoneControl</option>
-            </select>
-            <?php if ($appSeleccionada === 'sup'): ?>
             <button onclick="abrirCrear()"
                     style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;
                            padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;
                            cursor:pointer;display:flex;align-items:center;gap:8px;">
                 <i class="fas fa-plus"></i> Nuevo usuario
             </button>
-            <?php endif; ?>
             <a class="btn-logout" href="<?= $basePath ?>/logout">
                 <i class="fas fa-sign-out-alt"></i> Cerrar sesión
             </a>
@@ -115,66 +101,6 @@ $usuariosNegocio = $usuariosNegocio ?? [];
 
     <div class="content">
 
-        <?php if ($appSeleccionada !== 'sup'): ?>
-        <div class="card">
-            <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <i class="fas fa-store" style="color:#6366f1;"></i>
-                    <h3><?= $appSeleccionada === 'storecontrol' ? 'StoreControl' : 'PhoneControl' ?></h3>
-                    <span><?= count($usuariosNegocio) ?> registros</span>
-                </div>
-                <div class="search-wrap">
-                    <i class="fas fa-search s-icon"></i>
-                    <input id="buscarNegocio" type="text" placeholder="Buscar usuario..."
-                           oninput="filtrarNegocio(this.value)"
-                           style="background:#12121e;border:1px solid #2d2d44;border-radius:6px;
-                                  padding:8px 12px 8px 32px;color:#e0e0e0;font-size:13px;
-                                  outline:none;width:220px;">
-                </div>
-            </div>
-
-            <?php if (empty($usuariosNegocio)): ?>
-                <div class="empty-state">
-                    <i class="fas fa-user-shield"></i>
-                    No se encontraron usuarios (o no se pudo conectar a la base de datos).
-                </div>
-            <?php else: ?>
-            <div style="overflow-x:auto;">
-            <table class="tbl-fact" id="tablaNegocio" style="width:100%;border-collapse:collapse;">
-                <thead>
-                    <tr style="border-bottom:1px solid #1e1e30;">
-                        <th style="text-align:left;color:#555;font-size:11px;font-weight:700;letter-spacing:.5px;">NOMBRE</th>
-                        <th style="text-align:left;color:#555;font-size:11px;font-weight:700;letter-spacing:.5px;">EMAIL</th>
-                        <th style="text-align:left;color:#555;font-size:11px;font-weight:700;letter-spacing:.5px;">ROL</th>
-                        <th style="text-align:left;color:#555;font-size:11px;font-weight:700;letter-spacing:.5px;">NEGOCIO</th>
-                        <th style="text-align:left;color:#555;font-size:11px;font-weight:700;letter-spacing:.5px;">SUCURSAL</th>
-                        <th style="text-align:left;color:#555;font-size:11px;font-weight:700;letter-spacing:.5px;">ESTADO</th>
-                        <th style="text-align:left;color:#555;font-size:11px;font-weight:700;letter-spacing:.5px;">REGISTRO</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($usuariosNegocio as $u): ?>
-                    <tr data-nombre="<?= strtolower(htmlspecialchars($u['nombre'] . ' ' . $u['email'])) ?>">
-                        <td style="font-weight:600;color:#e0e0e0;"><?= htmlspecialchars($u['nombre']) ?></td>
-                        <td style="color:#aaa;font-size:13px;"><?= htmlspecialchars($u['email'] ?? '') ?: '<span style="color:#444;">—</span>' ?></td>
-                        <td style="color:#aaa;font-size:13px;"><?= htmlspecialchars(ucfirst($u['rol'] ?? '')) ?></td>
-                        <td style="color:#aaa;font-size:13px;"><?= htmlspecialchars($u['negocio_nombre'] ?? '') ?: '<span style="color:#444;">—</span>' ?></td>
-                        <td style="color:#aaa;font-size:13px;"><?= htmlspecialchars($u['sucursal_nombre'] ?? '') ?: '<span style="color:#444;">Todas</span>' ?></td>
-                        <td>
-                            <span class="badge-estado <?= (int)$u['activo'] ? 'badge-activo' : 'badge-inactivo' ?>">
-                                <?= (int)$u['activo'] ? 'Activo' : 'Inactivo' ?>
-                            </span>
-                        </td>
-                        <td style="color:#888;font-size:12px;"><?= date('d/m/Y', strtotime($u['created_at'])) ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-            </div>
-            <?php endif; ?>
-        </div>
-
-        <?php else: ?>
         <div class="card">
             <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
                 <div style="display:flex;align-items:center;gap:10px;">
@@ -396,13 +322,6 @@ async function eliminarAdmin(id, nombre) {
 function filtrar(q) {
     q = q.toLowerCase();
     document.querySelectorAll('#tablaAdmins tbody tr').forEach(tr => {
-        tr.style.display = tr.dataset.nombre.includes(q) ? '' : 'none';
-    });
-}
-
-function filtrarNegocio(q) {
-    q = q.toLowerCase();
-    document.querySelectorAll('#tablaNegocio tbody tr').forEach(tr => {
         tr.style.display = tr.dataset.nombre.includes(q) ? '' : 'none';
     });
 }

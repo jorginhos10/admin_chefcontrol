@@ -967,32 +967,6 @@ class AdminModel {
         } catch (\Throwable $e) { return []; }
     }
 
-    // Usuarios de un negocio externo (StoreControl / PhoneControl): cada uno vive en
-    // su propia base de datos (mismo servidor, mismo esquema — PhoneControl nació de
-    // un fork de StoreControl), así que se abre una conexión PDO aparte por consulta.
-    public function obtenerUsuariosNegocio(string $app): array {
-        $conf = SupConfig::DB_NEGOCIOS[$app] ?? null;
-        if (!$conf) return [];
-
-        try {
-            $opts = [
-                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            ];
-            $dsn = "mysql:host={$conf['host']};dbname={$conf['dbname']};charset=" . SupConfig::DB_CHARSET;
-            $db  = new PDO($dsn, $conf['user'], $conf['pass'], $opts);
-
-            return $db->query(
-                "SELECT u.id, u.nombre, u.email, u.rol, u.activo, u.created_at,
-                        v.nombre AS sucursal_nombre, c.nombre AS negocio_nombre
-                 FROM usuarios u
-                 LEFT JOIN veterinarias v ON v.id = u.sucursal_id
-                 LEFT JOIN cuentas      c ON c.id = u.cuenta_id
-                 ORDER BY u.activo DESC, u.nombre ASC"
-            )->fetchAll();
-        } catch (\Throwable $e) { return []; }
-    }
-
     public function crearAdmin(string $nombre, string $username, string $email, string $password): array {
         $this->ensureAdminsTable();
         $username = strtolower(trim($username));

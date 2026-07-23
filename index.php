@@ -334,16 +334,8 @@ switch ($action) {
 
         // Vista principal — sin JSON
         if (!$sub) {
-            $appSeleccionada = $_GET['app'] ?? 'sup';
-
-            if ($appSeleccionada === 'storecontrol' || $appSeleccionada === 'phonecontrol') {
-                $usuariosNegocio = $model->obtenerUsuariosNegocio($appSeleccionada);
-            } else {
-                $appSeleccionada = 'sup';
-                $admins          = $model->obtenerAdmins();
-                $currentId       = (int)($_SESSION['sup_id'] ?? 0);
-            }
-
+            $admins    = $model->obtenerAdmins();
+            $currentId = (int)($_SESSION['sup_id'] ?? 0);
             require_once __DIR__ . '/vista/usuarios/index.php';
             exit;
         }
